@@ -5,9 +5,11 @@ class Player:
     color = 0
     direction = []
 
+    playerID = 0
+
     GRID_SIZE = 10
 
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, color, playerID, StartDirection):
         """
         Initialize the player.
         :param x: Initial x-coordinate
@@ -19,7 +21,9 @@ class Player:
 
         self.position = [x,y]
         self.color = color
-        self.direction = [1,0]
+        self.direction = StartDirection
+
+        self.playerID = playerID
 
     def move(self):
         """

@@ -12,7 +12,7 @@ class GameBoard:
         :param height: Height of the game board in grid cells
         """
         # TODO: Initialize a 2D list to represent the game board
-        # 0 can represent empty cells, 1 for trail
+        # 0 can represent empty cells, 1 for trail of player 1, 2 for trail of player 2
 
         self.board = [[0 for i in range(width)] for j in range(height)]
 
@@ -31,9 +31,9 @@ class GameBoard:
                     pygame.draw.rect(screen,
                                  (128,128,128), 
                                  pygame.Rect(j * self.GIRD_SIZE, i * self.GIRD_SIZE, self.GIRD_SIZE, self.GIRD_SIZE))
-                elif(self.board[i][j] == 1):
+                elif(self.board[i][j] != 0):
                     pygame.draw.rect(screen,
-                                 (255,150,150), 
+                                 (254 / self.board[i][j], 127, 127 * self.board[i][j]), 
                                  pygame.Rect(j * self.GIRD_SIZE, i * self.GIRD_SIZE, self.GIRD_SIZE, self.GIRD_SIZE))
                 
                 pygame.draw.rect(screen,
@@ -41,7 +41,7 @@ class GameBoard:
                                  pygame.Rect(j * self.GIRD_SIZE, i * self.GIRD_SIZE, self.GIRD_SIZE, self.GIRD_SIZE),
                                  1)
 
-    def is_collision(self, x, y):
+    def is_collision(self, x, y, playerID):
         """
         Check if the given coordinates collide with the board boundaries or a trail.
         :param x: X-coordinate to check
@@ -55,10 +55,10 @@ class GameBoard:
 
             
 
-            if(self.board[y][x] == 1):
+            if(self.board[y][x] != 0):
                 return True
             else:
-                self.board[y][x] = 1
+                self.board[y][x] = playerID
         
             return False
         else:

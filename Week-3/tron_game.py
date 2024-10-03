@@ -22,7 +22,7 @@ def initialize_game():
 
     return screen
 
-def handle_events(player):
+def handle_events(player1, player2):
     """
     Handle Pygame events, including player input.
     :param player: Player object to update based on input
@@ -32,7 +32,8 @@ def handle_events(player):
     # Handle QUIT event
     # Handle KEYDOWN events to change player direction
 
-    directionChange = [0,0]
+    directionChange_1 = [0,0]
+    directionChange_2 = [0,0]
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -40,18 +41,31 @@ def handle_events(player):
         
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_w:
-                directionChange = [0,-1]
+                directionChange_1 = [0,-1]
 
             elif event.key ==pygame.K_s:
-                directionChange = [0,1]
+                directionChange_1 = [0,1]
 
             elif event.key == pygame.K_a:
-                directionChange = [-1,0]
+                directionChange_1 = [-1,0]
 
             elif event.key == pygame.K_d:
-                directionChange = [1,0]
+                directionChange_1 = [1,0]
+
+            elif event.key == pygame.K_UP:
+                directionChange_2 = [0,-1]
+
+            elif event.key ==pygame.K_DOWN:
+                directionChange_2 = [0,1]
+
+            elif event.key == pygame.K_LEFT:
+                directionChange_2 = [-1,0]
+
+            elif event.key == pygame.K_RIGHT:
+                directionChange_2 = [1,0]
     
-    player.change_direction(directionChange)
+    player1.change_direction(directionChange_1)
+    player2.change_direction(directionChange_2)
 
     return True
 
@@ -68,11 +82,11 @@ def update_game_state(player, game_board):
 
     player.move()
 
-    isCollision = game_board.is_collision(player.position[0], player.position[1])
+    isCollision = game_board.is_collision(player.position[0], player.position[1], player.playerID)
 
     return isCollision
 
-def draw_game(screen, game_board, player):
+def draw_game(screen, game_board, player1, player2):
     """
     Draw the current game state.
     :param screen: Pygame screen object to draw on
@@ -85,9 +99,11 @@ def draw_game(screen, game_board, player):
     # Update the display
 
 
-    game_board.draw(screen)
+    game_board.draw(screen,)
 
-    player.draw(screen)
+    player1.draw(screen)
+
+    player2.draw(screen)
 
     pygame.display.flip()
 
@@ -103,15 +119,21 @@ def main():
     #   - Draw game
     #   - Control game speed
 
-    PLAYER_X_POS = 5
-    PLAYER_Y_POS = 5
-    PLAYER_COLOR = (255,0,0)
-
-    player = Player(PLAYER_X_POS, PLAYER_Y_POS, PLAYER_COLOR)
-
-
-    GAMEBOARD_WIDTH = 30
+    GAMEBOARD_WIDTH = 80
     GAMEBOARD_HEIGHT = 40
+
+    PLAYER_1_X_POS = int(GAMEBOARD_WIDTH/3)
+    PLAYER_1_COLOR = (255,0,0)
+    PLAYER_1_DEFAULT_DIRECTION = [1,0]
+
+    PLAYER_2_X_POS = int((2 * GAMEBOARD_WIDTH)/3)
+    PLAYER_2_COLOR = (0,0,255)
+    PLAYER_2_DEFAULT_DIRECTION = [-1,0]
+
+    PLAYER_Y_POS = int(GAMEBOARD_HEIGHT / 2)
+
+    player1 = Player(PLAYER_1_X_POS, PLAYER_Y_POS, PLAYER_1_COLOR, 1, PLAYER_1_DEFAULT_DIRECTION)
+    player2 = Player(PLAYER_2_X_POS, PLAYER_Y_POS, PLAYER_2_COLOR, 2, PLAYER_2_DEFAULT_DIRECTION)
 
     gameboard = GameBoard(GAMEBOARD_WIDTH, GAMEBOARD_HEIGHT)
 
@@ -119,13 +141,16 @@ def main():
 
     running = True
     GameOver = False
-    while running and not GameOver:
-        running = handle_events(player)
+    GameOver2 = False
+    while running and not (GameOver or GameOver2):
+        running = handle_events(player1, player2)
 
-        GameOver = update_game_state(player, gameboard)
+        GameOver = update_game_state(player1, gameboard)
 
-        if(not GameOver):
-            draw_game(screen, gameboard, player)
+        GameOver2 = update_game_state(player2, gameboard)
+
+        if(not (GameOver or GameOver2)):
+            draw_game(screen, gameboard, player1, player2)
 
         time.sleep(0.1)
 
