@@ -1,10 +1,9 @@
 import pygame
-import time
 
 from player import Player
 from game_board import GameBoard
 
-def initialize_game():
+def initialize_game(WIDTH, HEIGHT):
     """
     Initialize Pygame and create the game window.
     :return: Pygame screen object
@@ -14,13 +13,21 @@ def initialize_game():
 
     pygame.init()
 
-    WIDTH, HEIGHT = 800, 600
+    
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Tron")
 
     screen.fill((255,255,255))
 
     return screen
+
+def pauseTillClose():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            return False
+        
+    return True
+
 
 def handle_events(player1, player2):
     """
@@ -40,29 +47,31 @@ def handle_events(player1, player2):
             return False
         
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_w:
-                directionChange_1 = [0,-1]
 
-            elif event.key ==pygame.K_s:
-                directionChange_1 = [0,1]
+            match event.key:
+                case pygame.K_w:
+                    directionChange_1 = [0,-1]
 
-            elif event.key == pygame.K_a:
-                directionChange_1 = [-1,0]
+                case pygame.K_s:
+                    directionChange_1 = [0,1]
 
-            elif event.key == pygame.K_d:
-                directionChange_1 = [1,0]
+                case pygame.K_a:
+                    directionChange_1 = [-1,0]
 
-            elif event.key == pygame.K_UP:
-                directionChange_2 = [0,-1]
+                case pygame.K_d:
+                    directionChange_1 = [1,0]
 
-            elif event.key ==pygame.K_DOWN:
-                directionChange_2 = [0,1]
+                case pygame.K_UP:
+                    directionChange_2 = [0,-1]
 
-            elif event.key == pygame.K_LEFT:
-                directionChange_2 = [-1,0]
+                case pygame.K_DOWN:
+                    directionChange_2 = [0,1]
 
-            elif event.key == pygame.K_RIGHT:
-                directionChange_2 = [1,0]
+                case pygame.K_LEFT:
+                    directionChange_2 = [-1,0]
+
+                case pygame.K_RIGHT:
+                    directionChange_2 = [1,0]
     
     player1.change_direction(directionChange_1)
     player2.change_direction(directionChange_2)
@@ -107,6 +116,31 @@ def draw_game(screen, game_board, player1, player2):
 
     pygame.display.flip()
 
+def displayWinner(screen, GameOverP1, GameOverP2, width, height):
+
+    font = pygame.font.Font('freesansbold.ttf', 48)
+ 
+    text = 0
+    if(GameOverP1):
+        text = font.render('Blue Player Wins!', True, (0,0,255), (255,255,255))
+    elif(GameOverP2):
+        text = font.render('Red Player Wins', True, (255,0,0), (255,255,255))
+    
+    
+    textRect = text.get_rect()
+    
+    textRect.center = (width // 2, height // 2)
+
+    return text, textRect
+
+def updateWinnerWindow(window, text, textRect):
+    
+    window.blit(text, textRect)
+
+    pygame.display.flip()
+
+
+
 def main():
     """
     Main game loop.
@@ -118,6 +152,9 @@ def main():
     #   - Update game state
     #   - Draw game
     #   - Control game speed
+
+    WINDOW_WIDTH = 800
+    WINDOW_HEIGHT = 600
 
     GAMEBOARD_WIDTH = 80
     GAMEBOARD_HEIGHT = 40
@@ -137,21 +174,29 @@ def main():
 
     gameboard = GameBoard(GAMEBOARD_WIDTH, GAMEBOARD_HEIGHT)
 
-    screen = initialize_game()
+    screen = initialize_game(WINDOW_WIDTH, WINDOW_HEIGHT)
 
     running = True
-    GameOver = False
-    GameOver2 = False
-    while running and not (GameOver or GameOver2):
+    GameOverP1 = False
+    GameOverP2 = False
+
+    while running and not (GameOverP1 or GameOverP2):
         running = handle_events(player1, player2)
 
-        GameOver = update_game_state(player1, gameboard)
+        GameOverP1 = update_game_state(player1, gameboard)
 
-        GameOver2 = update_game_state(player2, gameboard)
+        GameOverP2 = update_game_state(player2, gameboard)
 
-        if(not (GameOver or GameOver2)):
+        if(not (GameOverP1 or GameOverP2)):
             draw_game(screen, gameboard, player1, player2)
 
-        time.sleep(0.1)
+        pygame.time.delay(100)
+
+    text, textRect = displayWinner(screen, GameOverP1, GameOverP2, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+    while running:
+        running = pauseTillClose()
+
+        updateWinnerWindow(screen, text, textRect)
 
 main()
