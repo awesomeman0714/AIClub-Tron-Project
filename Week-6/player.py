@@ -17,16 +17,27 @@ class Player:
         self.direction = [1, 0] if player_id == 1 else [-1, 0]
         self.trail = [(x, y)]
         self.controller = ai
+        self.opponent = None  # Will be set later
+
+    def set_opponent(self, opponent):
+        """
+        Set the opponent for this player.
+        :param opponent: The opponent Player object
+        """
+        self.opponent = opponent
 
     def move(self, game_board):
         """
         Move the player based on their current direction.
         """
+        if self.opponent is None:
+            raise ValueError("Opponent not set. Call set_opponent() before moving.")
+
+        action = self.controller.get_direction(game_board, self, self.opponent)
+        self.change_direction(action)
+
         new_x = self.x + self.direction[0]
         new_y = self.y + self.direction[1]
-
-        action = self.controller.get_direction(game_board, self)
-        self.change_direction(action)
         
         if 0 <= new_x < game_board.width and 0 <= new_y < game_board.height:
             self.x = new_x

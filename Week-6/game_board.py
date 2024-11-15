@@ -1,42 +1,32 @@
 import pygame
 
 class GameBoard:
-
     def __init__(self, width, height):
         """
         Initialize the game board.
         :param width: Width of the game board in grid cells
         :param height: Height of the game board in grid cells
         """
-        # TODO: Initialize a 2D list to represent the game board
-        # 0 can represent empty cells, 1 for trail of player 1, 2 for trail of player 2
-
         self.width = width
         self.height = height
-
-        self.grid = [[0 for i in range(width)] for j in range(height)]
-        self.GRID_SIZE = 15
-
+        self.grid = [[0 for _ in range(width)] for _ in range(height)]
+        self.cell_size = 20
 
     def draw(self, screen):
         """
         Draw the game board on the screen.
         :param screen: Pygame screen object to draw on
         """
-        # TODO: Iterate through the 2D list and draw rectangles for each cell
-        # Empty cells can be one color, trails another
-
-        for i in range(len(self.grid)): # rows
-            for j in range(len(self.grid[i])): # columns
-                
-                pygame.draw.rect(screen,
-                                 (128,128,128), 
-                                 pygame.Rect(j * self.GRID_SIZE, i * self.GRID_SIZE, self.GRID_SIZE, self.GRID_SIZE))
-    
-                pygame.draw.rect(screen,
-                                 (50,50,50), 
-                                 pygame.Rect(j * self.GRID_SIZE, i * self.GRID_SIZE, self.GRID_SIZE, self.GRID_SIZE),
-                                 1)
+        for y in range(self.height):
+            for x in range(self.width):
+                rect = pygame.Rect(x * self.cell_size, y * self.cell_size, 
+                                   self.cell_size, self.cell_size)
+                if self.grid[y][x] == 0:
+                    pygame.draw.rect(screen, (50, 50, 50), rect)
+                elif self.grid[y][x] == 1:
+                    pygame.draw.rect(screen, (200, 0, 0), rect)
+                elif self.grid[y][x] == 2:
+                    pygame.draw.rect(screen, (0, 0, 200), rect)
 
     def is_collision(self, x, y):
         """
@@ -45,14 +35,10 @@ class GameBoard:
         :param y: Y-coordinate to check
         :return: True if collision, False otherwise
         """
-        # TODO: Check if x and y are within board boundaries
-        # Also check if the cell at (x, y) is not empty (i.e., has a trail)
-
-        if((x < len(self.grid[0]) and x >= 0) and (y < len(self.grid) and y >= 0)):
-            if(self.grid[y][x] != 0):
-                return True
-        
-            return False
-        
-        else:
-            return True
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            #print(f"Collision detected: Out of bounds at ({x}, {y})")
+            return 1
+        if self.grid[y][x] != 0:
+            #print(f"Collision detected: Trail or obstacle at ({x}, {y})")
+            return 2
+        return 0

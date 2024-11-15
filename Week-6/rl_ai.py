@@ -18,9 +18,10 @@ class DQN(nn.Module):
         return self.fc3(x)
 
 class RLAgent:
-    def __init__(self, state_size, action_size, model_file=None):
+    def __init__(self, state_size, action_size, player_id, model_file=None):
         self.state_size = state_size
         self.action_size = action_size
+        self.player_id = player_id
         self.memory = deque(maxlen=10000)
         self.gamma = 0.95  # discount rate
         self.epsilon = 0.01 if model_file else 1.0  # exploration rate
@@ -38,33 +39,37 @@ class RLAgent:
             self.load_model(model_file)
             self.model.eval()
 
-    def get_state(self, game_board, player):
-        state = np.zeros((15, 15))
+    def get_state(self, game_board, player, opponent):
+        state = np.zeros((7, 7, 3))  # 3 channels: empty, player, opponent
         for i in range(-3, 4):
             for j in range(-3, 4):
                 x, y = player.x + i, player.y + j
                 if 0 <= x < game_board.width and 0 <= y < game_board.height:
-                    state[i+3][j+3] = game_board.grid[y][x]
+                    if game_board.grid[y][x] == 0:
+                        state[i+3][j+3][0] = 1  # Empty
+                    elif game_board.grid[y][x] == player.player_id:
+                        state[i+3][j+3][1] = 1  # Player
+                    else:
+                        state[i+3][j+3][2] = 1  # Opponent
                 else:
-                    state[i+3][j+3] = -1  # Represent walls
+                    state[i+3][j+3][2] = 1  # Treat walls as opponent
         return state.flatten()
 
     def get_valid_directions(self, current_direction):
         invalid_direction = [-current_direction[0], -current_direction[1]]
         return [d for d in self.directions if d != invalid_direction]
 
-    def get_direction(self, game_board, player):
-        state = self.get_state(game_board, player)
+    def get_direction(self, game_board, player, opponent):
+        state = self.get_state(game_board, player, opponent)
         valid_directions = self.get_valid_directions(player.direction)
         
         if np.random.rand() <= self.epsilon:
             return random.choice(valid_directions)
         
         state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        with torch.no_grad():  # Disable gradient computation
+        with torch.no_grad():
             q_values = self.model(state_tensor)
         
-        # Filter Q-values for valid directions only
         valid_q_values = [q_values[0][self.directions.index(d)].item() for d in valid_directions]
         best_valid_action = valid_directions[np.argmax(valid_q_values)]
         
@@ -96,29 +101,29 @@ class RLAgent:
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def train(self, game_board, player):
-        state = self.get_state(game_board, player)
+    def train(self, game_board, player, opponent):
+        state = self.get_state(game_board, player, opponent)
         done = False
         total_reward = 0
-        steps = 0
 
         while not done:
-            action = self.get_direction(game_board, player)
+            action = self.get_direction(game_board, player, opponent)
             old_direction = player.direction[:]
             player.change_direction(action)
             
             if player.direction == [-old_direction[0], -old_direction[1]]:
-                print(f"Warning: Invalid 180-degree turn attempted. Old: {old_direction}, New: {player.direction}")
                 player.direction = old_direction  # Revert to the old direction
             
             collision = player.move(game_board)
 
-            next_state = self.get_state(game_board, player)
+            next_state = self.get_state(game_board, player, opponent)
             reward = 1  # Reward for surviving one more step
-            steps += 1
 
             if collision or game_board.is_collision(player.x, player.y):
                 reward = -10  # Penalty for collision
+                done = True
+            elif game_board.is_collision(opponent.x, opponent.y):
+                reward = 10  # Reward for opponent's collision
                 done = True
 
             total_reward += reward
@@ -133,7 +138,7 @@ class RLAgent:
                 self.replay(32)
 
         self.episode_rewards.append(total_reward)
-        return total_reward, steps
+        return total_reward
 
     def save_model(self, filename):
         torch.save(self.model.state_dict(), filename)
