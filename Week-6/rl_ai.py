@@ -40,19 +40,19 @@ class RLAgent:
             self.model.eval()
 
     def get_state(self, game_board, player, opponent):
-        state = np.zeros((7, 7, 3))  # 3 channels: empty, player, opponent
-        for i in range(-3, 4):
-            for j in range(-3, 4):
-                x, y = player.x + i, player.y + j
+        state = np.zeros((40, 30, 3))  # 3 channels: empty, player, opponent
+        for i in range(0, 40):
+            for j in range(0, 30):
+                x, y = i, j
                 if 0 <= x < game_board.width and 0 <= y < game_board.height:
                     if game_board.grid[y][x] == 0:
-                        state[i+3][j+3][0] = 1  # Empty
+                        state[i][j][0] = 1  # Empty
                     elif game_board.grid[y][x] == player.player_id:
-                        state[i+3][j+3][1] = 1  # Player
+                        state[i][j][1] = 1  # Player
                     else:
-                        state[i+3][j+3][2] = 1  # Opponent
+                        state[i][j][2] = 1  # Opponent
                 else:
-                    state[i+3][j+3][2] = 1  # Treat walls as opponent
+                    state[i][j][2] = 1  # Treat walls as opponent
         return state.flatten()
 
     def get_valid_directions(self, current_direction):

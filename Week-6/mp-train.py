@@ -3,8 +3,9 @@ from game_board import GameBoard
 from player import Player
 from rl_ai import RLAgent
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
 
-def plot_rewards(rewards1, rewards2):
+def plot_rewards(rewards1, rewards2, num):
     plt.figure(figsize=(10, 5))
     plt.plot(rewards1, label='Player 1')
     plt.plot(rewards2, label='Player 2')
@@ -12,19 +13,10 @@ def plot_rewards(rewards1, rewards2):
     plt.xlabel('Episode')
     plt.ylabel('Total Reward')
     plt.legend()
-    plt.savefig('rewards_plot.png')
+    plt.savefig('rewards_plot_{num}.png')
     plt.close()
 
-def plot_steps(steps):
-    plt.figure(figsize=(10, 5))
-    plt.plot(steps)
-    plt.title('Steps Survived over Time')
-    plt.xlabel('Episode')
-    plt.ylabel('Steps')
-    plt.savefig('steps_plot.png')
-    plt.close()
-
-def train():
+def train(num):
     game_board = GameBoard(40, 30)
     rl_agent1 = RLAgent(state_size=40*30*3, action_size=4, player_id=1)
     rl_agent2 = RLAgent(state_size=40*30*3, action_size=4, player_id=2)
@@ -35,12 +27,11 @@ def train():
     player1.set_opponent(player2)
     player2.set_opponent(player1)
 
-    num_episodes = 100
+    num_episodes = 1000
 
     rewards1 = []
     rewards2 = []
 
-    all_steps = []
 
     for episode in range(num_episodes):
         game_board = GameBoard(40, 30)
@@ -108,15 +99,16 @@ def train():
         rewards2.append(total_reward2)
 
         if episode % 10 == 0:
-            print(f"Episode: {episode}, Player 1 Reward: {total_reward1}, Player 2 Reward: {total_reward2}")
+            print(f"Episode: {episode}, Player 1 Reward: {total_reward1}, Player 2 Reward: {total_reward2}, Iteration: {num}")
 
         if episode % 100 == 0:
-            print(f"Episode: {episode}, Player 1 Reward: {total_reward1}, Player 2 Reward: {total_reward2}")
+            print(f"Episode: {episode}, Player 1 Reward: {total_reward1}, Player 2 Reward: {total_reward2}, Iteration: {num}")
             plot_rewards(rewards1, rewards2)
 
-    rl_agent1.save_model("tron_model_player1.pth")
-    rl_agent2.save_model("tron_model_player2.pth")
-    plot_rewards(rewards1, rewards2)
+    rl_agent1.save_model("tron_model_player1_{num}.pth")
+    rl_agent2.save_model("tron_model_player2_{num}.pth")
+    plot_rewards(rewards1, rewards2, num)
 
 if __name__ == "__main__":
-    train()
+    with Pool(5) as p:
+        p.map(train, [1,2,3,4,5])
